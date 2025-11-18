@@ -24,6 +24,8 @@ def main(args):
         grid_file=args.grid_file,
         netlist_file=args.netlist_file,
         output_file=args.output_file)
+    
+    r.run()
 
 
 if __name__ == "__main__":
