@@ -242,6 +242,7 @@ class grid_maze_router:
             l, c, r = src
             print(f"----------------net: {net}")
             print(f"l: {l}. r: {r}. c: {c}")
+            print(visited)
             frontier = [(self.grid[l][r][c], (l, c, r))]
             while frontier:
                 path_cost, (l, c, r) = heapq.heappop(frontier)
@@ -278,13 +279,12 @@ class grid_maze_router:
                     
 
                     n_cost = self.grid[nl][nr][nc]
-                    if nl:
-                        n_cost += self.via_p
-                    path_info[(nl, nc, nr)] = dir
-                    visited.add((nl, nc, nr))
-
                     # if not an obstacle
                     if (n_cost > 0):
+                        if nl:
+                            n_cost += self.via_p
+                        path_info[(nl, nc, nr)] = dir
+                        visited.add((nl, nc, nr))
                         heapq.heappush(frontier, (n_cost + path_cost, (nl, nc, nr)))
 
         print("Done searching for the results")
