@@ -247,9 +247,6 @@ class grid_maze_router:
             while frontier:
                 path_cost, (l, c, r) = heapq.heappop(frontier)
 
-                if (net == 3):
-                    print((l, c, r))
-
                 # see if it's been blocked
                 if (self.grid[l][r][c] == -1):
                     continue
@@ -284,7 +281,7 @@ class grid_maze_router:
                     n_cost = self.grid[nl][nr][nc]
                     # if not an obstacle
                     if (n_cost > 0):
-                        if nl:
+                        if dl:
                             n_cost += self.via_p
                         path_info[(nl, nc, nr)] = dir
                         visited.add((nl, nc, nr))
