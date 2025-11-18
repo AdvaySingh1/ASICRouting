@@ -18,6 +18,7 @@ class grid_maze_router:
         self.layers = 0
         self.cols = 0
         self.rows = 0
+        self.visited = set()
 
         self._parse_input_files()
 
@@ -132,6 +133,11 @@ class grid_maze_router:
                     l -= 1
         # append the src
         self.path_info[net].appendleft((l, c, r))
+
+    
+    def _clean_up(self, net):
+        for l, c, r in self.path_info[net]:
+            self.visited.add((l, c, r))
                 
     
     def _print_paths(self, to_output_file=False):
@@ -158,7 +164,8 @@ class grid_maze_router:
         layer_neighbors = (((1, 0), 'W'), ((-1, 0), 'E'), ((0, 1), 'N'), ((0, -1), 'S'))
         self.paths = {}
         for net, (src, dst) in self.netlist.items():
-            visited = {src}
+            visited = self.visited.copy()
+            visited.add(src)
             path_info = {}
             l, c, r = src
             print(f"----------------net: {net}")
@@ -182,6 +189,9 @@ class grid_maze_router:
                     print("-----End Printing path info-------")
 
                     self._backtrace(net, path_info, dst)
+
+                    # also clean up
+                    self._clean_up(net)
                         
 
                 for (dx, dy), dir in layer_neighbors:
@@ -206,62 +216,11 @@ class grid_maze_router:
 
 
 
-    def _run_two_point_multi_layer_no_penalties_with_path_info(self):
-        # do the dijkstra's algorithm
-        # now this stores the dir we came from
-        layer_neighbors = (((1, 0), 'W'), ((-1, 0), 'E'), ((0, 1), 'N'), ((0, -1), 'S'))
-        self.paths = {}
-        for net, (src, dst) in self.netlist.items():
-            visited = {src}
-            path_info = {}
-            l, c, r = src
-            print(f"----------------net: {net}")
-            print(f"l: {l}. r: {r}. c: {c}")
-            frontier = [(self.grid[l][r][c], (l, c, r))]
-            while frontier:
-                path_cost, (l, c, r) = heapq.heappop(frontier)
-
-                # see if it's been blocked
-                if (self.grid[l][r][c] == -1):
-                    raise("Encountered a blocked gate. Likely the source")
-                
-                # see if it's the dst
-                if ((l, c, r) == dst): 
-                    debug_print(f"Found route for {net} with pathcost of {path_cost}")
-
-                    # TODO: need to add the path even if not reached
-                    # back trace function
-                    print("-----Printing path info-------")
-                    print(path_info)
-                    print("-----End Printing path info-------")
-
-                    self._backtrace(net, path_info, dst)
-                        
-
-                for (dx, dy), dir in layer_neighbors:
-                    nc, nr = c + dx, r + dy
-                    # check range
-                    if not (0 <= nc < self.cols and 0 <= nr < self.rows):
-                        continue
-                    # see if it's been visited
-                    if ((l, nc, nr) in visited):
-                        continue
-
-                    n_cost = self.grid[l][nr][nc]
-                    path_info[(l, nc, nr)] = dir
-                    visited.add((l, nc, nr))
-
-                    # if not an obstacle
-                    if (n_cost > 0):
-                        heapq.heappush(frontier, (n_cost + path_cost, (l, nc, nr)))
-
-        print("Done searching for the results")
-        self._print_paths()
         
     def run(self):
         # self._run_two_point_sigle_layer_no_penalties_path_calculator()
-        # self._run_two_point_sigle_layer_no_penalties_with_path_info()
-        self._run_two_point_multi_layer_no_penalties_with_path_info()
+        self._run_two_point_sigle_layer_no_penalties_with_path_info()
+        # self._run_two_point_multi_layer_no_penalties_with_path_info()
 
                 
 
