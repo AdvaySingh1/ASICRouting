@@ -20,7 +20,7 @@ def main(args):
         exit(1)
 
 
-    router = grid_maze_router(
+    r = grid_maze_router(
         grid_file=args.grid_file,
         netlist_file=args.netlist_file,
         output_file=args.output_file)
