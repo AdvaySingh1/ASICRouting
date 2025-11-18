@@ -84,7 +84,7 @@ class grid_maze_router:
 
                 # see if it's been blocked
                 if (self.grid[l][r][c] == -1):
-                    raise("Encountered a blocked gate. Likely the source")
+                    continue
                 
                 # see if it's been visited
                 if ((l, c, r) in visited):
@@ -130,7 +130,11 @@ class grid_maze_router:
                     c -= 1
                 elif dir == 'U':
                     l += 1
+                    # indicate a via
+                    self.path_info[net].appendleft((2, c, r)) # 1 is added while printing
                 else:
+                    # indicate a via
+                    self.path_info[net].appendleft((2, c, r))
                     l -= 1
         # append the src
         self.path_info[net].appendleft((l, c, r))
@@ -176,7 +180,7 @@ class grid_maze_router:
 
                 # see if it's been blocked
                 if (self.grid[l][r][c] == -1):
-                    raise("Encountered a blocked gate. Likely the source")
+                    continue
                 
                 # see if it's the dst
                 if ((l, c, r) == dst): 
@@ -223,13 +227,12 @@ class grid_maze_router:
 
 
         layer_neighbors = (
+            ((-1, 0, 0), 'U'),
+            ((1, 0, 0), 'D'),
             ((0, 1, 0), 'W'),
             ((0, -1, 0), 'E'),
             ((0, 0, 1), 'N'), 
             ((0, 0, -1), 'S'))
-            # ((0, 0, -1), 'S'),
-            # ((1, 0, 0), 'D'),
-            # ((-1, 0, 0), 'U'))
 
 
         self.paths = {}
@@ -246,7 +249,6 @@ class grid_maze_router:
                 # see if it's been blocked
                 if (self.grid[l][r][c] == -1):
                     continue
-                    raise("Encountered a blocked gate. Likely the source")
 
                 
                 # see if it's the dst
@@ -275,15 +277,15 @@ class grid_maze_router:
                         continue
                     
 
-                    n_cost = self.grid[l][nr][nc]
+                    n_cost = self.grid[nl][nr][nc]
                     if nl:
                         n_cost += self.via_p
                     path_info[(nl, nc, nr)] = dir
-                    visited.add((l, nc, nr))
+                    visited.add((nl, nc, nr))
 
                     # if not an obstacle
                     if (n_cost > 0):
-                        heapq.heappush(frontier, (n_cost + path_cost, (l, nc, nr)))
+                        heapq.heappush(frontier, (n_cost + path_cost, (nl, nc, nr)))
 
         print("Done searching for the results")
         self._print_paths()
