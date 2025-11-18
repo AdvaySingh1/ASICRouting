@@ -59,6 +59,8 @@ class grid_maze_router:
             for line in n_f:
                 net, l1, c1, r1, l2, c2, r2 = (int(val) for val in line.strip().split(" "))
                 self.netlist[net] = (((l1-1), c1, r1), ((l2-1), c2, r2))
+                # add the sources to the visited set
+                self.visited.add((l1-1, c1, r1))
 
         self.print_netlist()
 
@@ -117,7 +119,6 @@ class grid_maze_router:
             self.path_info[net].appendleft((l, c, r))
             if (l, c, r) in path_info:
                 # not the src yet
-                # print(f"Getting here {l, c, r}")
                 dir = path_info[(l, c, r)]
                 if dir == 'N':
                     r -= 1
@@ -165,7 +166,6 @@ class grid_maze_router:
         self.paths = {}
         for net, (src, dst) in self.netlist.items():
             visited = self.visited.copy()
-            visited.add(src)
             path_info = {}
             l, c, r = src
             print(f"----------------net: {net}")
@@ -215,13 +215,87 @@ class grid_maze_router:
         self._print_paths()
 
 
+    
+    def _run_two_point_multi_layer_no_penalties_with_path_info(self):
+        # do the dijkstra's algorithm
+        # now this stores the dir we came from
+        layer_neighbors = (((1, 0), 'W'), ((-1, 0), 'E'), ((0, 1), 'N'), ((0, -1), 'S'))
+
+
+        layer_neighbors = (
+            ((0, 1, 0), 'W'),
+            ((0, -1, 0), 'E'),
+            ((0, 0, 1), 'N'), 
+            ((0, 0, -1), 'S'))
+            # ((0, 0, -1), 'S'),
+            # ((1, 0, 0), 'D'),
+            # ((-1, 0, 0), 'U'))
+
+
+        self.paths = {}
+        for net, (src, dst) in self.netlist.items():
+            visited = self.visited.copy()
+            path_info = {}
+            l, c, r = src
+            print(f"----------------net: {net}")
+            print(f"l: {l}. r: {r}. c: {c}")
+            frontier = [(self.grid[l][r][c], (l, c, r))]
+            while frontier:
+                path_cost, (l, c, r) = heapq.heappop(frontier)
+
+                # see if it's been blocked
+                if (self.grid[l][r][c] == -1):
+                    continue
+                    raise("Encountered a blocked gate. Likely the source")
+
+                
+                # see if it's the dst
+                if ((l, c, r) == dst): 
+                    debug_print(f"Found route for {net} with pathcost of {path_cost}")
+
+                    # TODO: need to add the path even if not reached
+                    # back trace function
+                    print("-----Printing path info-------")
+                    print(path_info)
+                    print("-----End Printing path info-------")
+
+                    self._backtrace(net, path_info, dst)
+
+                    # also clean up
+                    self._clean_up(net)
+                        
+
+                for (dl, dx, dy), dir in layer_neighbors:
+                    nl, nc, nr = l + dl, c + dx, r + dy
+                    # check range
+                    if not (0 <= nl < self.layers and 0 <= nc < self.cols and 0 <= nr < self.rows):
+                        continue
+                    # see if it's been visited
+                    if ((nl, nc, nr) in visited):
+                        continue
+                    
+
+                    n_cost = self.grid[l][nr][nc]
+                    if nl:
+                        n_cost += self.via_p
+                    path_info[(nl, nc, nr)] = dir
+                    visited.add((l, nc, nr))
+
+                    # if not an obstacle
+                    if (n_cost > 0):
+                        heapq.heappush(frontier, (n_cost + path_cost, (l, nc, nr)))
+
+        print("Done searching for the results")
+        self._print_paths()
+
+
 
 
         
     def run(self):
         # self._run_two_point_sigle_layer_no_penalties_path_calculator()
-        self._run_two_point_sigle_layer_no_penalties_with_path_info()
-        # self._run_two_point_multi_layer_no_penalties_with_path_info()
+        # self._run_two_point_sigle_layer_no_penalties_with_path_info()
+        self._run_two_point_multi_layer_no_penalties_with_path_info()
 
                 
 
