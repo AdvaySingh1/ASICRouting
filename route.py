@@ -7,14 +7,24 @@
 
 import sys
 import argparse
+# import router
+from router import grid_maze_router
+
 
 
 def main(args):
     print("-- MAIN FUNCTION --")
-
+    
     if not (args.grid_file and args.netlist_file and args.output_file):
         print("Didn't specify all the args")
         exit(1)
+
+
+    router = grid_maze_router(
+        grid_file=args.grid_file,
+        netlist_file=args.netlist_file,
+        output_file=args.output_file)
+
 
 if __name__ == "__main__":
     # print(__file__)
@@ -26,8 +36,8 @@ if __name__ == "__main__":
     main(args)
     x = 10
 
-
-if __name__ == "__route__":
-    print("Got called as route")
+def some():
+    if __name__ == "route":
+        print("Got called as route")
 
     # main(*args, **kwargs)
