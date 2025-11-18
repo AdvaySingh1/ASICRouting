@@ -292,12 +292,85 @@ class grid_maze_router:
 
 
 
+    def _run_two_point_multi_layer_with_penalties_and_path_info(self):
+        # do the dijkstra's algorithm
+        # now this stores the dir we came from
+        layer_neighbors = (((1, 0), 'W'), ((-1, 0), 'E'), ((0, 1), 'N'), ((0, -1), 'S'))
+
+
+        layer_neighbors = (
+            ((-1, 0, 0), 'U'),
+            ((1, 0, 0), 'D'),
+            ((0, 1, 0), 'W'),
+            ((0, -1, 0), 'E'),
+            ((0, 0, 1), 'N'), 
+            ((0, 0, -1), 'S'))
+
+
+        self.paths = {}
+        for net, (src, dst) in self.netlist.items():
+            visited = self.visited.copy()
+            path_info = {}
+            l, c, r = src
+            print(f"----------------net: {net}")
+            print(f"l: {l}. r: {r}. c: {c}")
+            print(visited)
+            frontier = [(self.grid[l][r][c], (l, c, r), 'I')]
+            while frontier:
+                path_cost, (l, c, r), prev_dir = heapq.heappop(frontier)
+
+                # see if it's been blocked
+                if (self.grid[l][r][c] == -1):
+                    continue
+
+                
+                # see if it's the dst
+                if ((l, c, r) == dst): 
+                    debug_print(f"Found route for {net} with pathcost of {path_cost}")
+
+                    # TODO: need to add the path even if not reached
+                    # back trace function
+                    print("-----Printing path info-------")
+                    print(path_info)
+                    print("-----End Printing path info-------")
+
+                    self._backtrace(net, path_info, dst)
+
+                    # also clean up
+                    self._clean_up(net)
+                        
+
+                for (dl, dx, dy), dir in layer_neighbors:
+                    nl, nc, nr = l + dl, c + dx, r + dy
+                    # check range
+                    if not (0 <= nl < self.layers and 0 <= nc < self.cols and 0 <= nr < self.rows):
+                        continue
+                    # see if it's been visited
+                    if ((nl, nc, nr) in visited):
+                        continue
+                    
+
+                    n_cost = self.grid[nl][nr][nc]
+                    # if not an obstacle
+                    if (n_cost > 0):
+                        if dl:
+                            n_cost += self.via_p
+                        if not (prev_dir == 'I' or dir == prev_dir):
+                            n_cost += self.bend_p
+                        path_info[(nl, nc, nr)] = dir
+                        visited.add((nl, nc, nr))
+                        heapq.heappush(frontier, (n_cost + path_cost, (nl, nc, nr), dir))
+
+        print("Done searching for the results")
+        self._print_paths()
+
 
         
     def run(self):
         # self._run_two_point_sigle_layer_no_penalties_path_calculator()
         # self._run_two_point_sigle_layer_no_penalties_with_path_info()
-        self._run_two_point_multi_layer_no_penalties_with_path_info()
+        # self._run_two_point_multi_layer_no_penalties_with_path_info()
+        self._run_two_point_multi_layer_with_penalties_and_path_info()
 
                 
 
