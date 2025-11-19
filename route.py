@@ -13,8 +13,6 @@ from router import grid_maze_router
 
 
 def main(args):
-    print("-- MAIN FUNCTION --")
-    
     if not (args.grid_file and args.netlist_file and args.output_file):
         print("Didn't specify all the args")
         exit(1)
@@ -29,12 +27,16 @@ def main(args):
 
 
 if __name__ == "__main__":
+    if __debug__:
+        print("RUNNING IN DEBUG MODE")
     # print(__file__)
     parser = argparse.ArgumentParser(add_help=True)
     parser.add_argument("-g","--grid_file",type=str)
     parser.add_argument("-n","--netlist_file",type=str)
     parser.add_argument("-o","--output_file",type=str)
     args = parser.parse_args()
+
+    print(args)
     main(args)
     x = 10
 

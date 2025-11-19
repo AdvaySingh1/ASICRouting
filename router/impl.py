@@ -44,25 +44,27 @@ class grid_maze_router:
                 if not curr_row % self.rows:
                     self.layers += 1
                     self.grid.append([None for _ in range(self.rows)])
-                row = [int(val) for val in line.strip().split(" ")]
+                row = [int(val) for val in line.strip().split(" ") if val]
 
                 if len(row) != self.cols:
                     raise("Invalid number of columns in grid")
                 
                 self.grid[-1][curr_row % self.rows] = row
-                    
-            self.print_grid()
+            
+            if __debug__:
+                self.print_grid()
     
     def _parse_netlist_file(self):
         with open(self.netlist_file, "r") as n_f:
             self.num_nets = int(n_f.readline().strip())
             for line in n_f:
-                net, l1, c1, r1, l2, c2, r2 = (int(val) for val in line.strip().split(" "))
+                net, l1, c1, r1, l2, c2, r2 = (int(val) for val in line.strip().split(" ") if val)
                 self.netlist[net] = (((l1-1), c1, r1), ((l2-1), c2, r2))
                 # add the sources to the visited set
                 self.visited.add((l1-1, c1, r1))
 
-        self.print_netlist()
+        if __debug__:
+            self.print_netlist()
 
 
     def _parse_input_files(self):
@@ -76,8 +78,6 @@ class grid_maze_router:
         for net, (src, dst) in self.netlist.items():
             visited = set()
             l, c, r = src
-            print(f"----------------net: {net}")
-            print(f"l: {l}. r: {r}. c: {c}")
             frontier = [(self.grid[l][r][c], (l, c, r))]
             while frontier:
                 path_cost, (l, c, r) = heapq.heappop(frontier)
@@ -109,7 +109,7 @@ class grid_maze_router:
                         heapq.heappush(frontier, (n_cost + path_cost, (l, nc, nr)))
 
             
-            print("Done searching for the results")
+
 
 
     def _backtrace(self, net, path_info, pos):
@@ -148,7 +148,13 @@ class grid_maze_router:
     def _print_paths(self, to_output_file=False):
         if (to_output_file):
             with open(self.output_file, "w") as o_f:
+                # total number of nets not the ones which got routed
+                print(self.num_nets, file=o_f)
                 for net in range (1, self.num_nets+1):
+                    # some nets are not getting routed
+                    # TODO: how to handle that case
+                    if not net in self.path_info:
+                        continue
                     print(f"{net}", file=o_f)
                     for l, c, r in self.path_info[net]:
                         print(f"{l+1} {c} {r}", file=o_f)
@@ -172,8 +178,6 @@ class grid_maze_router:
             visited = self.visited.copy()
             path_info = {}
             l, c, r = src
-            print(f"----------------net: {net}")
-            print(f"l: {l}. r: {r}. c: {c}")
             frontier = [(self.grid[l][r][c], (l, c, r))]
             while frontier:
                 path_cost, (l, c, r) = heapq.heappop(frontier)
@@ -215,7 +219,6 @@ class grid_maze_router:
                     if (n_cost > 0):
                         heapq.heappush(frontier, (n_cost + path_cost, (l, nc, nr)))
 
-        print("Done searching for the results")
         self._print_paths()
 
 
@@ -240,9 +243,6 @@ class grid_maze_router:
             visited = self.visited.copy()
             path_info = {}
             l, c, r = src
-            print(f"----------------net: {net}")
-            print(f"l: {l}. r: {r}. c: {c}")
-            print(visited)
             frontier = [(self.grid[l][r][c], (l, c, r))]
             while frontier:
                 path_cost, (l, c, r) = heapq.heappop(frontier)
@@ -287,7 +287,6 @@ class grid_maze_router:
                         visited.add((nl, nc, nr))
                         heapq.heappush(frontier, (n_cost + path_cost, (nl, nc, nr)))
 
-        print("Done searching for the results")
         self._print_paths()
 
 
@@ -312,9 +311,6 @@ class grid_maze_router:
             visited = self.visited.copy()
             path_info = {}
             l, c, r = src
-            print(f"----------------net: {net}")
-            print(f"l: {l}. r: {r}. c: {c}")
-            print(visited)
             frontier = [(self.grid[l][r][c], (l, c, r), 'I')]
             while frontier:
                 path_cost, (l, c, r), prev_dir = heapq.heappop(frontier)
@@ -330,9 +326,10 @@ class grid_maze_router:
 
                     # TODO: need to add the path even if not reached
                     # back trace function
-                    print("-----Printing path info-------")
-                    print(path_info)
-                    print("-----End Printing path info-------")
+                    if __debug__:
+                        print("-----Printing path info-------")
+                        print(path_info)
+                        print("-----End Printing path info-------")
 
                     self._backtrace(net, path_info, dst)
 
@@ -361,8 +358,7 @@ class grid_maze_router:
                         visited.add((nl, nc, nr))
                         heapq.heappush(frontier, (n_cost + path_cost, (nl, nc, nr), dir))
 
-        print("Done searching for the results")
-        self._print_paths()
+        self._print_paths(to_output_file=True)
 
 
         
